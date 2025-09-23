@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>MusicStore - О нас</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .about-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .about-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .about-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .team-members {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .team-member {
+            width: 200px;
+            text-align: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .team-member img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+            border: 3px solid #007bff;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .feature-card {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .contact-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        .contact-method {
+            flex: 1;
+            min-width: 250px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .contact-method i {
+            font-size: 24px;
+            color: #007bff;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>MusicStore</h1>
+        <nav>
+            <a th:href="@{/}">Главная</a>
+            <a th:href="@{/about}" class="active">О нас</a>
+
+            <div th:if="${user != null && !user.getEmail().isEmpty()}" class="user-menu">
+                <span th:text="${user.name}"></span>
+                <a th:href="@{/profile}">Профиль</a>
+                <a th:href="@{/order}">Мои заказы</a>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn-link">Выйти</button>
+                </form>
+
+                <th:block th:if="${user.getRoles().?[#this.name() == 'ROLE_ADMIN'].size() > 0}">
+                    <a th:href="@{/admin}">Админ-панель</a>
+                </th:block>
+            </div>
+            <div th:unless="${user != null && !user.getEmail().isEmpty()}" class="auth-links">
+                <a th:href="@{/login}">Вход</a>
+                <a th:href="@{/registration}">Регистрация</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="about-container">
+        <div class="about-header">
+            <h2>О компании MusicStore</h2>
+            <p class="subtitle">Мы - ведущий магазин музыкальных инструментов с 2010 года</p>
+        </div>
+
+        <div class="about-section">
+            <h3>Наша история</h3>
+            <p>MusicStore был основан в 2010 году группой энтузиастов-музыкантов, которые хотели создать место, где каждый мог бы найти качественные инструменты по доступным ценам. Начиная с небольшого магазина в центре Москвы, мы выросли в крупнейшую сеть музыкальных магазинов в России.</p>
+            <p>Сегодня у нас более 50 магазинов по всей стране и интернет-платформа, которая обслуживает клиентов по всему миру.</p>
+        </div>
+
+        <div class="about-section">
+            <h3>Наши преимущества</h3>
+            <div class="features">
+                <div class="feature-card">
+                    <h4>Гарантия качества</h4>
+                    <p>Все инструменты проходят тщательную проверку перед продажей. Мы сотрудничаем только с проверенными производителями.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Широкий ассортимент</h4>
+                    <p>Более 10,000 товаров в каталоге - от бюджетных вариантов для начинающих до профессионального оборудования.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Экспертная поддержка</h4>
+                    <p>Наши консультанты - профессиональные музыканты, которые помогут с выбором и ответят на все вопросы.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Гибкие условия оплаты</h4>
+                    <p>Рассрочка, кредит, оплата частями - мы предлагаем удобные способы оплаты для наших клиентов.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h3>Наша команда</h3>
+            <div class="team-members">
+                <div class="team-member">
+                    <img src="/static/images/team1.jpg" alt="Алексей Петров">
+                    <h4>Алексей Петров</h4>
+                    <p>Основатель, CEO</p>
+                </div>
+                <div class="team-member">
+                    <img src="/static/images/team2.jpg" alt="Мария Иванова">
+                    <h4>Мария Иванова</h4>
+                    <p>Директор по продажам</p>
+                </div>
+                <div class="team-member">
+                    <img src="/static/images/team3.jpg" alt="Дмитрий Смирнов">
+                    <h4>Дмитрий Смирнов</h4>
+                    <p>Главный звукорежиссер</p>
+                </div>
+                <div class="team-member">
+                    <img src="/static/images/team4.jpg" alt="Елена Кузнецова">
+                    <h4>Елена Кузнецова</h4>
+                    <p>Менеджер по работе с клиентами</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h3>Наши магазины</h3>
+            <p>Мы гордимся нашими розничными магазинами, где вы можете не только купить инструменты, но и:</p>
+            <ul>
+                <li>Попробовать инструменты перед покупкой</li>
+                <li>Получить бесплатную консультацию</li>
+                <li>Посетить мастер-классы и мероприятия</li>
+                <li>Оформить инструмент в кредит или рассрочку</li>
+            </ul>
+            <p><strong>Главный магазин:</strong> Москва, ул. Музыкальная, 15 (ежедневно с 10:00 до 21:00)</p>
+        </div>
+
+        <div class="about-section">
+            <h3>Свяжитесь с нами</h3>
+            <div class="contact-info">
+                <div class="contact-method">
+                    <h4><i>📞</i> Телефон</h4>
+                    <p>8 (800) 123-45-67</p>
+                    <p>Бесплатно по России</p>
+                </div>
+                <div class="contact-method">
+                    <h4><i>✉️</i> Email</h4>
+                    <p>info@musicstore.ru</p>
+                    <p>Ответим в течение 24 часов</p>
+                </div>
+                <div class="contact-method">
+                    <h4><i>🕒</i> Соцсети</h4>
+                    <p>VK: vk.com/musicstore</p>
+                    <p>Instagram: @musicstore</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 MusicStore. Все права защищены.</p>
+        <div class="footer-links">
+            <a href="#">Политика конфиденциальности</a>
+            <a href="#">Условия использования</a>
+            <a href="#">Публичная оферта</a>
+        </div>
+    </footer>
+</div>
+</body>
+</html>

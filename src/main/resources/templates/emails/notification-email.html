@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; color: white; text-align: center;">
+        <h1 th:text="${subject}">Уведомление</h1>
+    </div>
+
+    <div style="padding: 20px; background: #f8f9fa;">
+        <p>Уважаемый пользователь,</p>
+
+        <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #667eea;">
+            <p th:text="${message}" style="margin: 0; line-height: 1.6;"></p>
+        </div>
+
+        <p>Это автоматическое уведомление от системы MusicStore. Пожалуйста, не отвечайте на это письмо.</p>
+    </div>
+
+    <div style="text-align: center; padding: 20px; color: #6c757d; font-size: 14px;">
+        <p>С уважением,<br>Команда MusicStore</p>
+        <p>© 2024 MusicStore. Все права защищены.</p>
+    </div>
+</div>
+</body>
+</html>

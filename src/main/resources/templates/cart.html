@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Корзина - Music Store</title>
+    <!-- Подключаем Bootstrap и стили -->
+</head>
+<body>
+<!-- Навбар (аналогичный catalog.html) -->
+
+<div class="container mt-4">
+    <h1>🛒 Корзина</h1>
+
+    <!-- Баланс пользователя -->
+    <div th:if="${userBalance != null}" class="alert alert-info">
+        <h5>Ваш баланс: <span th:text="${#numbers.formatDecimal(userBalance, 0, 'COMMA', 2, 'POINT')}">0</span> ₽</h5>
+        <form th:action="@{/balance/top-up}" method="post" class="d-inline">
+            <input type="number" name="amount" min="1" step="0.01" placeholder="Сумма" required>
+            <button type="submit" class="btn btn-sm btn-success">Пополнить</button>
+        </form>
+    </div>
+
+    <!-- Сообщения -->
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <!-- Товары в корзине -->
+    <div th:if="${cart != null and !cart.items.empty}">
+        <div class="row mb-3">
+            <div class="col">
+                <h4>Итого: <span th:text="${#numbers.formatDecimal(cart.totalAmount, 0, 'COMMA', 2, 'POINT')}">0</span> ₽</h4>
+                <p>Товаров: <span th:text="${cart.totalItems}">0</span></p>
+            </div>
+        </div>
+
+        <div class="row" th:each="item : ${cart.items.values()}">
+            <div class="col-md-12 mb-3">
+                <div class="card">
+                    <div class="row g-0">
+                        <div class="col-md-2">
+                            <img th:src="${item.imagePath != null} ?
+                                             @{'/uploads/' + ${item.imagePath}} :
+                                             @{'/images/default-product.jpg'}"
+                                 class="img-fluid rounded-start"
+                                 style="height: 150px; object-fit: cover;">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 th:text="${item.productName}"></h5>
+                                <p class="text-muted">Цена: <span th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 2, 'POINT')}">0</span> ₽</p>
+                                <form th:action="@{/cart/update/{id}(id=${item.productId})}" method="post" class="d-inline">
+                                    <label>Количество:</label>
+                                    <input type="number" name="quantity" th:value="${item.quantity}" min="1" max="10" class="form-control d-inline-block w-25">
+                                    <button type="submit" class="btn btn-sm btn-primary">Обновить</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center">
+                            <form th:action="@{/cart/remove/{id}(id=${item.productId})}" method="post">
+                                <button type="submit" class="btn btn-danger">🗑️ Удалить</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки оформления -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <form th:action="@{/cart/checkout/buy}" method="post">
+                    <button type="submit" class="btn btn-success btn-lg w-100">
+                        💰 Купить (<span th:text="${#numbers.formatDecimal(cart.totalAmount, 0, 'COMMA', 2, 'POINT')}">0</span> ₽)
+                    </button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form th:action="@{/cart/checkout/reserve}" method="post">
+                    <button type="submit" class="btn btn-warning btn-lg w-100">
+                        ⏰ Забронировать
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Пустая корзина -->
+    <div th:if="${cart == null or cart.items.empty}" class="text-center py-5">
+        <div class="alert alert-info">
+            <h4>Корзина пуста</h4>
+            <p>Перейдите в <a href="/catalog">каталог</a> чтобы добавить товары</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

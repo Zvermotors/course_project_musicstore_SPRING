@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .user-table {
+            font-size: 0.9rem;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+        }
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">Администрирование</h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/users">
+                            👥 Создать Пользователя
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/products">
+                            📦 Товары
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/orders">
+                            📋 Заказы
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <h1 class="h2">Управление пользователями</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <span class="badge bg-primary fs-6">
+                        Всего: <span th:text="${#lists.size(userList)}">0</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="summary-card p-3 text-center">
+                        <h5>Активные</h5>
+                        <h3 th:text="${activeUsersCount}">0</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="summary-card p-3 text-center" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);">
+                        <h5>Неактивные</h5>
+                        <h3 th:text="${inactiveUsersCount}">0</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="summary-card p-3 text-center" style="background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);">
+                        <h5>С балансом</h5>
+                        <h3 th:text="${usersWithBalanceCount}">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="table table-hover user-table">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Баланс</th>
+                            <th>Статус</th>
+                            <th>Дата регистрации</th>
+                            <th>Последнее обновление</th>
+                            <th class="text-center">Активность</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="user : ${userList}"
+                            th:class="${user.active} ? 'table-success' : 'table-light'">
+                            <td th:text="${user.id}"></td>
+                            <td>
+                                <span th:text="${user.email}"></span>
+                                <span th:if="${#strings.contains(user.email, 'admin')}" class="badge bg-warning text-dark ms-1">ADMIN</span>
+                            </td>
+                            <td>
+                                    <span class="fw-bold"
+                                          th:class="${user.balance != null and user.balance > 0} ? 'text-success' : 'text-muted'"
+                                          th:text="${user.balance != null} ? ${#numbers.formatCurrency(user.balance)} : '0.00'">
+                                    </span>
+                            </td>
+                            <td>
+                                    <span class="badge status-badge"
+                                          th:class="${user.active} ? 'bg-success' : 'bg-secondary'"
+                                          th:text="${user.active} ? 'Активен' : 'Неактивен'">
+                                    </span>
+                            </td>
+                            <td th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+                            <td th:text="${#temporals.format(user.updatedAt, 'dd.MM.yyyy HH:mm')}"></td>
+                            <td class="text-center">
+                                <form th:action="@{/admin/user-management/toggle-status}" method="post" class="d-inline">
+                                    <input type="hidden" name="userId" th:value="${user.id}">
+                                    <div class="form-check form-switch d-inline-block">
+                                        <input class="form-check-input" type="checkbox"
+                                               th:checked="${user.active}"
+                                               onchange="this.form.submit()">
+                                        <input type="hidden" name="isActive" th:value="${!user.active}">
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div th:if="${#lists.isEmpty(userList)}" class="text-center py-5">
+                <div class="empty-state">
+                    <h4>Пользователи не найдены</h4>
+                    <p class="text-muted">В системе пока нет зарегистрированных пользователей.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Автоматическое обновление скрытого поля при изменении чекбокса
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.form-check-input');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const hiddenInput = this.nextElementSibling;
+                hiddenInput.value = this.checked ? 'false' : 'true';
+            });
+        });
+    });
+</script>
+</body>
+</html>

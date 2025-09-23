@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; color: white; text-align: center;">
+    <h1>Добро пожаловать в MusicStore!</h1>
+  </div>
+
+  <div style="padding: 20px; background: #f8f9fa;">
+    <p>Уважаемый пользователь,</p>
+    <p>Мы рады приветствовать вас в нашем музыкальном магазине! Ваш аккаунт был успешно создан.</p>
+
+    <div style="background: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <p><strong>Ваш email:</strong> <span th:text="${userName}"></span></p>
+    </div>
+
+    <p>Теперь вы можете:</p>
+    <ul>
+      <li>Просматривать наш каталог музыкальных инструментов</li>
+      <li>Совершать покупки онлайн</li>
+      <li>Отслеживать свои заказы</li>
+      <li>Получать уведомления о новых поступлениях</li>
+    </ul>
+
+    <p>Если у вас возникли вопросы, не стесняйтесь обращаться в нашу поддержку.</p>
+  </div>
+
+  <div style="text-align: center; padding: 20px; color: #6c757d; font-size: 14px;">
+    <p>С уважением,<br>Команда MusicStore</p>
+    <p>© 2024 MusicStore. Все права защищены.</p>
+  </div>
+</div>
+</body>
+</html>

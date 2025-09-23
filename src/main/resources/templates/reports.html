@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчеты - MusicStore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stat-card { transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .nav-tabs .nav-link.active { font-weight: 600; border-bottom: 3px solid #0d6efd; }
+        .chart-container { height: 400px; }
+        .table-hover tbody tr:hover { background-color: #f8f9fa; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .card-header { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-bar-chart-fill"></i> MusicStore
+        </a>
+        <div class="navbar-nav ms-auto">
+            <span class="navbar-text me-3">Администратор</span>
+            <button class="btn btn-outline-light btn-sm">
+                <a th:href="@{/admin-panel}" class="btn btn-danger btn-logout">
+                    <i class="bi bi-box-arrow-right"></i> Выйти в панель
+                </a>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Меню отчетов</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#revenue" class="list-group-item list-group-item-action active" data-bs-toggle="tab">
+                        <i class="bi bi-currency-dollar me-2"></i> Выручка
+                    </a>
+                    <a href="#authors" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                        <i class="bi bi-person-badge me-2"></i> Авторы
+                    </a>
+                    <a href="#sales" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                        <i class="bi bi-cart me-2"></i> Продажи
+                    </a>
+                    <a href="#products" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                        <i class="bi bi-box me-2"></i> Товары
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <!-- Фильтры -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-funnel"></i> Фильтры отчетов</h5>
+                </div>
+                <div class="card-body">
+                    <form id="reportFilterForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Начальная дата</label>
+                            <input type="date" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Конечная дата</label>
+                            <input type="date" class="form-control" id="endDate" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Автор</label>
+                            <select class="form-select" id="authorFilter">
+                                <option value="">Все авторы</option>
+                                <!-- Авторы будут загружены через JS -->
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-filter"></i> Применить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h6><i class="bi bi-currency-dollar"></i> Выручка</h6>
+                            <h3 id="totalRevenue">0 ₽</h3>
+                            <small>За период</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h6><i class="bi bi-cart-check"></i> Продажи</h6>
+                            <h3 id="totalSales">0</h3>
+                            <small>Заказов</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h6><i class="bi bi-people"></i> Авторы</h6>
+                            <h3 id="totalAuthors">0</h3>
+                            <small>Активных</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h6><i class="bi bi-box"></i> Товары</h6>
+                            <h3 id="totalProducts">0</h3>
+                            <small>Продано</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Индикатор загрузки -->
+            <div class="loading" id="loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <p class="mt-2">Загрузка данных...</p>
+            </div>
+
+            <!-- Контент отчетов -->
+            <div class="tab-content">
+                <!-- Выручка -->
+                <div class="tab-pane fade show active" id="revenue">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-currency-dollar"></i> Отчет по выручке</h5>
+                            <div>
+                                <button class="btn btn-sm btn-success" onclick="exportReport('revenue', 'excel')">
+                                    <i class="bi bi-file-excel"></i> Excel
+                                </button>
+                                <button class="btn btn-sm btn-danger ms-2" onclick="exportReport('revenue', 'pdf')">
+                                    <i class="bi bi-file-pdf"></i> PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                            <div class="table-responsive mt-4">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Период</th>
+                                        <th>Выручка</th>
+                                        <th>Продажи</th>
+                                        <th>Средний чек</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="revenueTable">
+                                    <!-- Данные через JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Авторы -->
+                <div class="tab-pane fade" id="authors">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-person-badge"></i> Популярность авторов</h5>
+                            <div>
+                                <button class="btn btn-sm btn-success" onclick="exportReport('authors', 'excel')">
+                                    Excel
+                                </button>
+                                <button class="btn btn-sm btn-danger ms-2" onclick="exportReport('authors', 'pdf')">
+                                    PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="authorsChart"></canvas>
+                            </div>
+                            <div class="table-responsive mt-4">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Автор</th>
+                                        <th>Продажи</th>
+                                        <th>Выручка</th>
+                                        <th>Доля рынка</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="authorsTable">
+                                    <!-- Данные через JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Продажи -->
+                <div class="tab-pane fade" id="sales">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-cart"></i> Статистика продаж</h5>
+                            <div>
+                                <button class="btn btn-sm btn-success" onclick="exportReport('sales', 'excel')">
+                                    Excel
+                                </button>
+                                <button class="btn btn-sm btn-danger ms-2" onclick="exportReport('sales', 'pdf')">
+                                    PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="salesChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="statusChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Базовый URL API
+    const API_BASE = '/api/reports';
+
+    // Глобальные переменные для графиков
+    let revenueChart, authorsChart, salesChart, statusChart;
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', function() {
+        // Установка дат по умолчанию (последние 30 дней)
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+
+        // Загрузка данных
+        loadReportData();
+        loadAuthorsList();
+
+        // Инициализация вкладок Bootstrap
+        const triggerTabList = document.querySelectorAll('[data-bs-toggle="tab"]');
+        triggerTabList.forEach(triggerEl => {
+            triggerEl.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tab = new bootstrap.Tab(this);
+                tab.show();
+            });
+        });
+    });
+
+    // Загрузка списка авторов
+    async function loadAuthorsList() {
+        try {
+            const response = await fetch(`${API_BASE}/authors-list`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const authors = await response.json();
+
+            const select = document.getElementById('authorFilter');
+            // Очищаем существующие options, кроме первого
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+
+            authors.forEach(author => {
+                const option = document.createElement('option');
+                option.value = author;
+                option.textContent = author;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Ошибка загрузки авторов:', error);
+            alert('Ошибка загрузки списка авторов');
+        }
+    }
+
+    // Загрузка данных отчета
+    async function loadReportData() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const authorFilter = document.getElementById('authorFilter').value;
+
+        // Валидация дат
+        if (!startDate || !endDate) {
+            alert('Пожалуйста, выберите обе даты');
+            return;
+        }
+
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('Начальная дата не может быть позже конечной');
+            return;
+        }
+
+        // Показываем индикатор загрузки
+        document.getElementById('loading').style.display = 'block';
+
+        try {
+            // Формируем URL с параметрами
+            const params = new URLSearchParams({
+                startDate: startDate,
+                endDate: endDate
+            });
+
+            if (authorFilter) {
+                params.append('authorFilter', authorFilter);
+            }
+
+            const response = await fetch(`${API_BASE}/data?${params}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            updateDashboard(data.dashboard);
+            updateRevenueReport(data.revenue);
+            updateAuthorsReport(data.authors);
+            updateSalesReport(data.sales);
+
+        } catch (error) {
+            console.error('Ошибка загрузки данных:', error);
+            alert('Ошибка загрузки данных отчета: ' + error.message);
+        } finally {
+            // Скрываем индикатор загрузки
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+
+    // Экспорт отчета
+    function exportReport(type, format) {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const authorFilter = document.getElementById('authorFilter').value;
+
+        // Валидация
+        if (!startDate || !endDate) {
+            alert('Пожалуйста, выберите даты для экспорта');
+            return;
+        }
+
+        // Формируем URL для экспорта
+        const params = new URLSearchParams({
+            startDate: startDate,
+            endDate: endDate
+        });
+
+        if (authorFilter) {
+            params.append('authorFilter', authorFilter);
+        }
+
+        // Открываем в новом окне для скачивания файла
+        window.open(`${API_BASE}/export/${type}/${format}?${params}`, '_blank');
+    }
+
+    // Обработка формы
+    document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        loadReportData();
+    });
+
+    // Обновление дашборда
+    function updateDashboard(data) {
+        if (data && data.totalRevenue !== undefined) {
+            document.getElementById('totalRevenue').textContent = data.totalRevenue.toFixed(2) + ' ₽';
+            document.getElementById('totalSales').textContent = data.totalSales || 0;
+            document.getElementById('totalAuthors').textContent = data.totalAuthors || 0;
+            document.getElementById('totalProducts').textContent = data.totalProducts || 0;
+        }
+    }
+
+    function updateRevenueReport(data) {
+        if (!data || !data.byPeriod) return;
+
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+
+        if (revenueChart) revenueChart.destroy();
+
+        revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.byPeriod.map(item => new Date(item.period).toLocaleDateString()),
+                datasets: [{
+                    label: 'Выручка (₽)',
+                    data: data.byPeriod.map(item => item.revenue),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Динамика выручки',
+                        font: { size: 16 }
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Рубли (₽)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Дата'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Обновление таблицы
+        const tableBody = document.getElementById('revenueTable');
+        tableBody.innerHTML = data.byPeriod.map(item => `
+            <tr>
+                <td>${new Date(item.period).toLocaleDateString()}</td>
+                <td>${item.revenue.toFixed(2)} ₽</td>
+                <td>${item.salesCount}</td>
+                <td>${item.averageOrderValue ? item.averageOrderValue.toFixed(2) : '0.00'} ₽</td>
+            </tr>
+        `).join('');
+    }
+
+    function updateAuthorsReport(data) {
+        if (!data || !data.topAuthors) return;
+
+        const ctx = document.getElementById('authorsChart').getContext('2d');
+
+        if (authorsChart) authorsChart.destroy();
+
+        authorsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.topAuthors.map(item => item.author),
+                datasets: [{
+                    label: 'Выручка (₽)',
+                    data: data.topAuthors.map(item => item.totalRevenue),
+                    backgroundColor: '#28a745',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Выручка по авторам',
+                        font: { size: 16 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Рубли (₽)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const tableBody = document.getElementById('authorsTable');
+        tableBody.innerHTML = data.topAuthors.map(item => `
+            <tr>
+                <td>${item.author}</td>
+                <td>${item.salesCount}</td>
+                <td>${item.totalRevenue.toFixed(2)} ₽</td>
+                <td>${item.marketShare ? item.marketShare.toFixed(1) : '0.0'}%</td>
+            </tr>
+        `).join('');
+    }
+
+    function updateSalesReport(data) {
+        if (!data) return;
+
+        // График продаж
+        if (data.byDay && data.byDay.length > 0) {
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            if (salesChart) salesChart.destroy();
+
+            salesChart = new Chart(salesCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.byDay.map(item => new Date(item.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Количество продаж',
+                        data: data.byDay.map(item => item.salesCount),
+                        backgroundColor: '#ffc107',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Количество продаж по дням',
+                            font: { size: 16 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // График статусов
+        if (data.statusDistribution) {
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            if (statusChart) statusChart.destroy();
+
+            statusChart = new Chart(statusCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Доступно', 'Забронировано', 'Продано'],
+                    datasets: [{
+                        data: [
+                            data.statusDistribution.available || 0,
+                            data.statusDistribution.booked || 0,
+                            data.statusDistribution.sold || 0
+                        ],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Распределение статусов',
+                            font: { size: 16 }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    }
+</script>
+</body>
+</html>

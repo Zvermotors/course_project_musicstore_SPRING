@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>MusicStore - Редактирование пользователя</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .user-form {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+        }
+        .radio-option input {
+            margin-right: 5px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>MusicStore - Админ-панель</h1>
+        <nav>
+            <a th:href="@{/admin}">Пользователи</a>
+            <a th:href="@{/admin/orders}">Заказы</a>
+            <a th:href="@{/admin/reports}">Отчеты</a>
+            <a th:href="@{/}">На сайт</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn-link">Выйти</button>
+            </form>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Редактирование пользователя</h2>
+
+        <div class="user-form">
+            <form th:action="@{/admin/user/edit}" method="post">
+                <input type="hidden" name="userId" th:value="${user.id}">
+
+                <div class="form-group">
+                    <label>ID:</label>
+                    <div th:text="${user.id}" class="form-control" style="background-color: #f8f9fa;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Имя:</label>
+                    <input type="text" id="name" name="name" th:value="${user.name}" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" th:value="${user.email}" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phoneNumber">Телефон:</label>
+                    <input type="text" id="phoneNumber" name="phoneNumber" th:value="${user.phoneNumber}" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Статус:</label>
+                    <div>
+                        <span th:classappend="${user.active} ? 'status-active' : 'status-inactive'"
+                              class="status-badge">
+                            <span th:text="${user.active} ? 'Активен' : 'Заблокирован'"></span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Дата регистрации:</label>
+                    <div th:text="${#temporals.format(user.dateOfCreated, 'dd.MM.yyyy HH:mm')}"
+                         class="form-control" style="background-color: #f8f9fa;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Роль:</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="role_user" name="role" value="USER"
+                                   th:checked="${user.roles.?[#this.name() == 'ROLE_USER'].size() > 0}">
+                            <label for="role_user">Пользователь</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="role_admin" name="role" value="ADMIN"
+                                   th:checked="${user.roles.?[#this.name() == 'ROLE_ADMIN'].size() > 0}">
+                            <label for="role_admin">Администратор</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Новый пароль (оставьте пустым, чтобы не менять):</label>
+                    <input type="password" id="password" name="password" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Подтверждение пароля:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control">
+                </div>
+
+                <div class="form-group" style="margin-top: 25px;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <a th:href="@{/admin}" class="btn btn-secondary">Отмена</a>
+
+                    <th:block th:if="${user.active}">
+                        <a th:href="@{'/admin/user/ban/' + ${user.id}}" class="btn btn-danger" style="float: right;">
+                            Заблокировать
+                        </a>
+                    </th:block>
+                    <th:block th:unless="${user.active}">
+                        <a th:href="@{'/admin/user/ban/' + ${user.id}}" class="btn btn-success" style="float: right;">
+                            Разблокировать
+                        </a>
+                    </th:block>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    // Валидация пароля
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password && password !== confirmPassword) {
+            e.preventDefault();
+            alert('Пароли не совпадают!');
+            return false;
+        }
+
+        return true;
+    });
+</script>
+</body>
+</html>
